@@ -1,74 +1,83 @@
-import pandas as pd
 import streamlit as st
+import pandas as pd
+from io import BytesIO
 
-# Cargar los archivos
-def cargar_archivos():
-    archivo_faltantes = st.file_uploader("Sube el archivo de faltantes", type=["xlsx", "csv"])
-    archivo_inventario = st.file_uploader("Sube el archivo de inventario", type=["xlsx", "csv"])
-    
-    if archivo_faltantes is not None and archivo_inventario is not None:
-        faltantes_df = pd.read_excel(archivo_faltantes) if archivo_faltantes.name.endswith("xlsx") else pd.read_csv(archivo_faltantes)
-        inventario_df = pd.read_excel(archivo_inventario) if archivo_inventario.name.endswith("xlsx") else pd.read_csv(archivo_inventario)
-        return faltantes_df, inventario_df
-    return None, None
+# Función para cargar el inventario de Google Sheets
+def load_inventory_file():
+    inventario_url = "https://docs.google.com/spreadsheets/d/1Y9SgliayP_J5Vi2SdtZmGxKWwf1iY7ma/export?format=xlsx"
+    inventario_api_df = pd.read_excel(inventario_url, sheet_name="Hoja1")
+    return inventario_api_df
 
-# Filtrar alternativas basadas en el código de artículo
-def filtrar_alternativas(faltantes_df, inventario_df):
-    codigos_faltantes = faltantes_df['cur'].unique()  # Los códigos que subiste
-    alternativas = inventario_df[inventario_df['cur'].isin(codigos_faltantes)]
-    return alternativas
+# Función para procesar las alternativas para un conjunto de códigos de artículo
+def procesar_alternativas(inventario_api_df, codigos_articulos):
+    # Filtrar el inventario solo por los artículos (codart) que aparecen en el archivo subido
+    alternativas_disponibles_df = inventario_api_df[inventario_api_df['codart'].isin(codigos_articulos)]
 
-# Filtrar por opciones seleccionadas
-def filtrar_por_opciones(df, opciones_seleccionadas):
-    if opciones_seleccionadas:
-        return df[df['opcion'].isin(opciones_seleccionadas)]
-    return df
+    # Excluir filas donde 'opcion' sea igual a 0
+    alternativas_disponibles_df = alternativas_disponibles_df[alternativas_disponibles_df['opcion'] != 0]
 
-# Generar un archivo Excel con los datos filtrados
+    return alternativas_disponibles_df
+
+# Función para generar un archivo Excel con los resultados
 def generar_excel(df):
-    output = "alternativas_filtradas.xlsx"
+    output = BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-        df.to_excel(writer, index=False, sheet_name="Alternativas")
+        df.to_excel(writer, index=False, sheet_name='Alternativas')
+    output.seek(0)
     return output
 
-# Interfaz Streamlit
-def app():
-    st.title("Filtrar y Descargar Alternativas de Artículos")
+# Streamlit UI
+st.title('Buscador de Alternativas por Código de Artículo')
 
-    # Cargar los archivos
-    faltantes_df, inventario_df = cargar_archivos()
-    
-    if faltantes_df is not None and inventario_df is not None:
-        # Mostrar las primeras filas de los datos cargados
-        st.write("Datos de Faltantes")
-        st.write(faltantes_df.head())
-        
-        st.write("Datos de Inventario")
-        st.write(inventario_df.head())
-        
-        # Filtrar alternativas basadas en los códigos de los artículos
-        alternativas_df = filtrar_alternativas(faltantes_df, inventario_df)
-        
-        # Mostrar los resultados de las alternativas disponibles
-        st.write("Alternativas Disponibles")
-        st.write(alternativas_df.head())
-        
-        # Selección de opciones
-        opciones_unicas = alternativas_df['opcion'].unique()
-        opciones_seleccionadas = st.multiselect("Selecciona las opciones que deseas ver", opciones_unicas, default=opciones_unicas[:3])
-        
-        # Filtrar según las opciones seleccionadas
-        alternativas_filtradas = filtrar_por_opciones(alternativas_df, opciones_seleccionadas)
-        
-        # Mostrar las alternativas filtradas
-        st.write(f"Alternativas filtradas por opción ({', '.join(map(str, opciones_seleccionadas))})")
-        st.write(alternativas_filtradas)
-        
-        # Generar y descargar el archivo Excel
-        if st.button("Descargar Excel"):
-            archivo = generar_excel(alternativas_filtradas)
-            st.download_button("Descargar archivo Excel", archivo, file_name="alternativas_filtradas.xlsx")
+# Subir archivo con códigos de artículos
+uploaded_file = st.file_uploader("Sube un archivo con los códigos de artículo (codart)", type=["xlsx", "csv"])
 
-# Ejecutar la app
-if __name__ == "__main__":
-    app()
+if uploaded_file:
+    # Leer el archivo subido
+    if uploaded_file.name.endswith('xlsx'):
+        df_subido = pd.read_excel(uploaded_file)
+    else:
+        df_subido = pd.read_csv(uploaded_file)
+
+    # Verificar que el archivo tenga la columna 'codart'
+    if 'codart' in df_subido.columns:
+        # Cargar el inventario
+        inventario_api_df = load_inventory_file()
+
+        # Filtrar solo los códigos subidos
+        codigos_articulos = df_subido['codart'].unique()
+
+        # Procesar las alternativas solo para los códigos de artículo que subes
+        alternativas = procesar_alternativas(inventario_api_df, codigos_articulos)
+
+        # Mostrar las alternativas
+        if not alternativas.empty:
+            st.write("Alternativas disponibles para los códigos ingresados:")
+            st.dataframe(alternativas)
+
+            # Selección de múltiples opciones (de 1 a 16)
+            opciones_seleccionadas = st.multiselect(
+                "Selecciona las opciones que deseas ver (puedes elegir varias)",
+                options=range(1, 17),
+                default=range(1, 17)  # Por defecto, selecciona todas las opciones
+            )
+
+            # Filtrar las alternativas para mostrar solo las opciones seleccionadas
+            alternativas_filtradas = alternativas[alternativas['opcion'].isin(opciones_seleccionadas)]
+
+            # Mostrar las alternativas filtradas
+            st.write(f"Mostrando alternativas para las opciones seleccionadas: {', '.join(map(str, opciones_seleccionadas))}")
+            st.dataframe(alternativas_filtradas)
+
+            # Generar archivo Excel para descargar
+            excel_file = generar_excel(alternativas_filtradas)
+            st.download_button(
+                label="Descargar archivo Excel con las opciones seleccionadas",
+                data=excel_file,
+                file_name=f"alternativas_opciones_{','.join(map(str, opciones_seleccionadas))}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+        else:
+            st.write("No se encontraron alternativas para los códigos ingresados.")
+    else:
+        st.error("El archivo subido no contiene la columna 'codart'.")
