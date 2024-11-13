@@ -31,8 +31,8 @@ def procesar_alternativas(inventario_api_df, codigo_producto, opcion_seleccionad
 # Streamlit UI
 st.title('Buscador de Alternativas por Código')
 
-# Botón para actualizar inventario
-if st.button('Actualizar inventario'):
+# Botón para actualizar base de datos
+if st.button('Actualizar base de datos'):
     st.cache_data.clear()
 
 # Cargar inventario
