@@ -8,12 +8,16 @@ def load_inventory_file():
     inventario_api_df = pd.read_excel(inventario_url, sheet_name="Hoja1")
     return inventario_api_df
 
-# Función para procesar las alternativas
-def procesar_alternativas(inventario_api_df, codigo_producto, opcion_seleccionada=None, columnas_adicionales=[]):
-    # Filtrar el inventario según el código de producto ingresado
-    alternativas_disponibles_df = inventario_api_df[inventario_api_df['cur'] == codigo_producto]
+# Función para procesar las alternativas en base a 'codart'
+def procesar_alternativas(inventario_api_df, codigo_articulo, opcion_seleccionada=None, columnas_adicionales=[]):
+    # Filtrar el inventario para obtener el 'cur' correspondiente al 'codart' ingresado
+    cur_producto = inventario_api_df[inventario_api_df['codart'] == codigo_articulo]['cur'].unique()
+    if len(cur_producto) == 0:
+        st.error(f"No se encontró el CUR para el artículo {codigo_articulo}.")
+        return pd.DataFrame()
 
-    # Ordenar por la cantidad disponible
+    # Filtrar las alternativas usando el 'cur' obtenido
+    alternativas_disponibles_df = inventario_api_df[inventario_api_df['cur'].isin(cur_producto)]
     alternativas_disponibles_df = alternativas_disponibles_df[alternativas_disponibles_df['unidadespresentacionlote'] > 0]
     alternativas_disponibles_df.sort_values(by='unidadespresentacionlote', ascending=False, inplace=True)
 
@@ -31,15 +35,11 @@ def procesar_alternativas(inventario_api_df, codigo_producto, opcion_seleccionad
 # Streamlit UI
 st.title('Buscador de Alternativas por Código')
 
-# Botón para actualizar base de datos
-if st.button('Actualizar base de datos'):
-    st.cache_data.clear()
-
 # Cargar inventario
 inventario_api_df = load_inventory_file()
 
-# Campo para ingresar el código del producto
-codigo_producto = st.text_input("Ingrese el código del producto (CUR):")
+# Campo para ingresar el código del artículo
+codigo_articulo = st.text_input("Ingrese el código del artículo (codart):")
 
 # Selección de columnas adicionales
 columnas_disponibles = ["emb", "nomart", "presentacionart", "numlote", "fechavencelote"]
@@ -49,9 +49,9 @@ columnas_adicionales = st.multiselect(
     default=["emb", "nomart"]
 )
 
-if codigo_producto:
+if codigo_articulo:
     # Mostrar opciones de alternativas si hay resultados
-    opciones_disponibles = procesar_alternativas(inventario_api_df, codigo_producto, columnas_adicionales=columnas_adicionales)
+    opciones_disponibles = procesar_alternativas(inventario_api_df, codigo_articulo, columnas_adicionales=columnas_adicionales)
 
     if not opciones_disponibles.empty:
         st.write("Alternativas disponibles:")
@@ -66,7 +66,7 @@ if codigo_producto:
         )
 
         # Filtrar por opción seleccionada y mostrar
-        alternativa_seleccionada_df = procesar_alternativas(inventario_api_df, codigo_producto, opcion_seleccionada, columnas_adicionales)
+        alternativa_seleccionada_df = procesar_alternativas(inventario_api_df, codigo_articulo, opcion_seleccionada, columnas_adicionales)
         st.write("Alternativa seleccionada:")
         st.dataframe(alternativa_seleccionada_df)
 
@@ -80,7 +80,7 @@ if codigo_producto:
         st.download_button(
             label="Descargar alternativa seleccionada",
             data=to_excel(alternativa_seleccionada_df),
-            file_name=f'alternativa_{codigo_producto}.xlsx',
+            file_name=f'alternativa_{codigo_articulo}.xlsx',
             mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
     else:
