@@ -20,8 +20,12 @@ def procesar_alternativas(inventario_api_df, codigo_articulo, opcion_seleccionad
     # Buscar las alternativas disponibles con el mismo CUR
     alternativas_disponibles_df = inventario_api_df[inventario_api_df['cur'] == cur_articulo[0]]
 
-    # Ordenar por la cantidad disponible y filtrar las que tengan unidades disponibles
+    # Asegurarse de que medvitdisp es numérico y manejar valores nulos
+    alternativas_disponibles_df['medvitdisp'] = pd.to_numeric(alternativas_disponibles_df['medvitdisp'], errors='coerce')
+    alternativas_disponibles_df = alternativas_disponibles_df.dropna(subset=['medvitdisp'])
     alternativas_disponibles_df = alternativas_disponibles_df[alternativas_disponibles_df['medvitdisp'] > 0]
+
+    # Ordenar por la cantidad disponible
     alternativas_disponibles_df.sort_values(by='medvitdisp', ascending=False, inplace=True)
 
     # Filtrar si se seleccionó una opción específica
