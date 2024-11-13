@@ -88,3 +88,4 @@ if uploaded_file:
             st.write("No se encontraron alternativas para los códigos ingresados.")
     else:
         st.error("El archivo subido no contiene la columna 'codart'.")
+
