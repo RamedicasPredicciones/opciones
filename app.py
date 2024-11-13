@@ -55,11 +55,14 @@ if uploaded_file:
             st.write("Alternativas disponibles para los códigos ingresados:")
             st.dataframe(alternativas)
 
-            # Selección de múltiples opciones (de 1 a 16)
+            # Obtener las opciones únicas de las alternativas (sin incluir las que son 0)
+            opciones_disponibles = alternativas['opcion'].unique()
+
+            # Selección de múltiples opciones basadas en las opciones disponibles
             opciones_seleccionadas = st.multiselect(
                 "Selecciona las opciones que deseas ver (puedes elegir varias)",
-                options=range(1, 17),
-                default=range(1, 17)  # Por defecto, selecciona todas las opciones
+                options=opciones_disponibles,
+                default=opciones_disponibles  # Por defecto, selecciona todas las opciones disponibles
             )
 
             # Filtrar las alternativas para mostrar solo las opciones seleccionadas
