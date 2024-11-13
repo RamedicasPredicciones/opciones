@@ -55,22 +55,26 @@ if uploaded_file:
             st.write("Alternativas disponibles para los códigos ingresados:")
             st.dataframe(alternativas)
 
-            # Selección de la opción (de 1 a 16)
-            opcion_seleccionada = st.selectbox("Selecciona la opción a ver", range(1, 17))
+            # Selección de múltiples opciones (de 1 a 16)
+            opciones_seleccionadas = st.multiselect(
+                "Selecciona las opciones que deseas ver (puedes elegir varias)",
+                options=range(1, 17),
+                default=range(1, 17)  # Por defecto, selecciona todas las opciones
+            )
 
-            # Filtrar las alternativas para mostrar solo la opción seleccionada
-            alternativas_filtradas = alternativas[alternativas['opcion'] == opcion_seleccionada]
+            # Filtrar las alternativas para mostrar solo las opciones seleccionadas
+            alternativas_filtradas = alternativas[alternativas['opcion'].isin(opciones_seleccionadas)]
 
             # Mostrar las alternativas filtradas
-            st.write(f"Mostrando alternativas para la opción {opcion_seleccionada}:")
+            st.write(f"Mostrando alternativas para las opciones seleccionadas: {', '.join(map(str, opciones_seleccionadas))}")
             st.dataframe(alternativas_filtradas)
 
             # Generar archivo Excel para descargar
             excel_file = generar_excel(alternativas_filtradas)
             st.download_button(
-                label="Descargar archivo Excel con la opción seleccionada",
+                label="Descargar archivo Excel con las opciones seleccionadas",
                 data=excel_file,
-                file_name=f"alternativas_opcion_{opcion_seleccionada}.xlsx",
+                file_name=f"alternativas_opciones_{','.join(map(str, opciones_seleccionadas))}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
         else:
