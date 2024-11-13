@@ -8,41 +8,44 @@ def load_inventory_file():
     inventario_api_df = pd.read_excel(inventario_url, sheet_name="Hoja1")
     return inventario_api_df
 
-# Función para procesar las alternativas en base a 'codart'
+# Función para procesar las alternativas
 def procesar_alternativas(inventario_api_df, codigo_articulo, opcion_seleccionada=None, columnas_adicionales=[]):
-    # Filtrar el inventario para obtener el 'cur' correspondiente al 'codart' ingresado
-    cur_producto = inventario_api_df[inventario_api_df['codart'] == codigo_articulo]['cur'].unique()
-    if len(cur_producto) == 0:
-        st.error(f"No se encontró el CUR para el artículo {codigo_articulo}.")
-        return pd.DataFrame()
+    # Filtrar el inventario según el código de artículo (codart) ingresado y obtener CUR correspondiente
+    cur_articulo = inventario_api_df[inventario_api_df['codart'] == codigo_articulo]['cur'].values
 
-    # Filtrar las alternativas usando el 'cur' obtenido
-    alternativas_disponibles_df = inventario_api_df[inventario_api_df['cur'].isin(cur_producto)]
-    alternativas_disponibles_df = alternativas_disponibles_df[alternativas_disponibles_df['unidadespresentacionlote'] > 0]
-    alternativas_disponibles_df.sort_values(by='unidadespresentacionlote', ascending=False, inplace=True)
+    # Si no se encuentra el CUR para el código, devolver un DataFrame vacío
+    if len(cur_articulo) == 0:
+        return pd.DataFrame()
+    
+    # Buscar las alternativas disponibles con el mismo CUR
+    alternativas_disponibles_df = inventario_api_df[inventario_api_df['cur'] == cur_articulo[0]]
+
+    # Ordenar por la cantidad disponible y filtrar las que tengan unidades disponibles
+    alternativas_disponibles_df = alternativas_disponibles_df[alternativas_disponibles_df['medvitdisp'] > 0]
+    alternativas_disponibles_df.sort_values(by='medvitdisp', ascending=False, inplace=True)
 
     # Filtrar si se seleccionó una opción específica
     if opcion_seleccionada is not None:
         alternativas_disponibles_df = alternativas_disponibles_df.head(opcion_seleccionada)
 
     # Incluir solo las columnas seleccionadas
-    columnas_basicas = ['cur', 'codart', 'unidadespresentacionlote', 'bodega']  # columnas siempre incluidas
+    columnas_basicas = ['cur', 'codart', 'medvitdisp', 'bodega']  # columnas básicas siempre incluidas
     columnas_finales = columnas_basicas + columnas_adicionales
     alternativas_disponibles_df = alternativas_disponibles_df[columnas_finales]
 
     return alternativas_disponibles_df
 
 # Streamlit UI
-st.title('Buscador de Alternativas por Código')
+st.title('Buscador de Alternativas por Código de Artículo')
 
 # Cargar inventario
 inventario_api_df = load_inventory_file()
 
-# Campo para ingresar el código del artículo
+# Campo para ingresar el código del producto (codart)
 codigo_articulo = st.text_input("Ingrese el código del artículo (codart):")
 
 # Selección de columnas adicionales
-columnas_disponibles = ["emb", "nomart", "presentacionart", "numlote", "fechavencelote"]
+columnas_disponibles = ["emb", "nomart", "presentación", "precio_control_directo", "cum", "n_comercial"]
 columnas_adicionales = st.multiselect(
     "Selecciona columnas adicionales para incluir en el archivo final:",
     options=columnas_disponibles,
