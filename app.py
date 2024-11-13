@@ -71,6 +71,8 @@ if uploaded_file:
 
             # Generar archivo Excel para descargar
             excel_file = generar_excel(alternativas_filtradas)
+
+            # Botón para descargar el archivo Excel
             st.download_button(
                 label="Descargar archivo Excel con las opciones seleccionadas",
                 data=excel_file,
