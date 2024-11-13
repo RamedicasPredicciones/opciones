@@ -49,7 +49,7 @@ inventario_api_df = load_inventory_file()
 codigo_articulo = st.text_input("Ingrese el código del artículo (codart):")
 
 # Selección de columnas adicionales
-columnas_disponibles = ["emb", "nomart", "presentación", "precio_control_directo", "cum", "n_comercial"]
+columnas_disponibles = ["emb", "nomart", "presentación", "cum"]
 columnas_adicionales = st.multiselect(
     "Selecciona columnas adicionales para incluir en el archivo final:",
     options=columnas_disponibles,
