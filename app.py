@@ -21,7 +21,7 @@ def procesar_alternativas(inventario_api_df, codigos_articulos):
 # Función para generar un archivo Excel con los resultados
 def generar_excel(df):
     output = BytesIO()
-    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:  # Cambié el motor a openpyxl
         df.to_excel(writer, index=False, sheet_name='Alternativas')
     output.seek(0)
     return output
@@ -61,27 +61,29 @@ if uploaded_file:
             # Selección de múltiples opciones basadas en las opciones disponibles
             opciones_seleccionadas = st.multiselect(
                 "Selecciona las opciones que deseas ver (puedes elegir varias)",
-                options=opciones_disponibles,
-                default=opciones_disponibles  # Por defecto, selecciona todas las opciones disponibles
+                options=opciones_disponibles  # No hay valor por defecto, puedes elegir las opciones manualmente
             )
 
             # Filtrar las alternativas para mostrar solo las opciones seleccionadas
-            alternativas_filtradas = alternativas[alternativas['opcion'].isin(opciones_seleccionadas)]
+            if opciones_seleccionadas:
+                alternativas_filtradas = alternativas[alternativas['opcion'].isin(opciones_seleccionadas)]
 
-            # Mostrar las alternativas filtradas
-            st.write(f"Mostrando alternativas para las opciones seleccionadas: {', '.join(map(str, opciones_seleccionadas))}")
-            st.dataframe(alternativas_filtradas)
+                # Mostrar las alternativas filtradas
+                st.write(f"Mostrando alternativas para las opciones seleccionadas: {', '.join(map(str, opciones_seleccionadas))}")
+                st.dataframe(alternativas_filtradas)
 
-            # Generar archivo Excel para descargar
-            excel_file = generar_excel(alternativas_filtradas)
+                # Generar archivo Excel para descargar
+                excel_file = generar_excel(alternativas_filtradas)
 
-            # Botón para descargar el archivo Excel
-            st.download_button(
-                label="Descargar archivo Excel con las opciones seleccionadas",
-                data=excel_file,
-                file_name=f"alternativas_opciones_{','.join(map(str, opciones_seleccionadas))}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
+                # Botón para descargar el archivo Excel
+                st.download_button(
+                    label="Descargar archivo Excel con las opciones seleccionadas",
+                    data=excel_file,
+                    file_name=f"alternativas_opciones_{','.join(map(str, opciones_seleccionadas))}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
+            else:
+                st.write("No has seleccionado ninguna opción para mostrar.")
         else:
             st.write("No se encontraron alternativas para los códigos ingresados.")
     else:
