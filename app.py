@@ -20,6 +20,9 @@ def procesar_alternativas(inventario_api_df, codigo_articulo):
     # Buscar las alternativas disponibles con el mismo CUR
     alternativas_disponibles_df = inventario_api_df[inventario_api_df['cur'] == cur_articulo[0]]
 
+    # Excluir filas donde 'opcion' sea igual a 0
+    alternativas_disponibles_df = alternativas_disponibles_df[alternativas_disponibles_df['opcion'] != 0]
+
     return alternativas_disponibles_df
 
 # Streamlit UI
