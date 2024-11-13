@@ -8,21 +8,10 @@ def load_inventory_file():
     inventario_api_df = pd.read_excel(inventario_url, sheet_name="Hoja1")
     return inventario_api_df
 
-# Función para procesar las alternativas para un solo código de artículo
-def procesar_alternativas(inventario_api_df, codigo_articulo, opcion_seleccionada=None):
-    # Filtrar el inventario según el código de artículo (codart) ingresado y obtener el 'cur' correspondiente
-    cur_articulo = inventario_api_df[inventario_api_df['codart'] == codigo_articulo]['cur'].values
-
-    # Si no se encuentra el CUR para el código, devolver un DataFrame vacío
-    if len(cur_articulo) == 0:
-        return pd.DataFrame()
-    
-    # Buscar las alternativas disponibles con el mismo CUR
-    alternativas_disponibles_df = inventario_api_df[inventario_api_df['cur'] == cur_articulo[0]]
-
-    # Si se seleccionó una opción, filtrar por 'opcion'
-    if opcion_seleccionada is not None:
-        alternativas_disponibles_df = alternativas_disponibles_df[alternativas_disponibles_df['opcion'] == opcion_seleccionada]
+# Función para procesar las alternativas para un conjunto de códigos de artículo
+def procesar_alternativas(inventario_api_df, codigos_articulos):
+    # Filtrar el inventario solo por los artículos (codart) que aparecen en el archivo subido
+    alternativas_disponibles_df = inventario_api_df[inventario_api_df['codart'].isin(codigos_articulos)]
 
     # Excluir filas donde 'opcion' sea igual a 0
     alternativas_disponibles_df = alternativas_disponibles_df[alternativas_disponibles_df['opcion'] != 0]
@@ -43,9 +32,6 @@ st.title('Buscador de Alternativas por Código de Artículo')
 # Subir archivo con códigos de artículos
 uploaded_file = st.file_uploader("Sube un archivo con los códigos de artículo (codart)", type=["xlsx", "csv"])
 
-# Cargar inventario
-inventario_api_df = load_inventory_file()
-
 if uploaded_file:
     # Leer el archivo subido
     if uploaded_file.name.endswith('xlsx'):
@@ -55,38 +41,36 @@ if uploaded_file:
 
     # Verificar que el archivo tenga la columna 'codart'
     if 'codart' in df_subido.columns:
-        # Procesar alternativas solo para los códigos en el archivo subido
-        resultados = pd.DataFrame()  # DataFrame vacío para acumular los resultados
+        # Cargar el inventario
+        inventario_api_df = load_inventory_file()
 
-        for codart in df_subido['codart']:
-            alternativas = procesar_alternativas(inventario_api_df, codart)
-            if not alternativas.empty:
-                # Añadir los resultados al DataFrame final
-                resultados = pd.concat([resultados, alternativas])
+        # Filtrar solo los códigos subidos
+        codigos_articulos = df_subido['codart'].unique()
 
-        # Mostrar los resultados
-        if not resultados.empty:
+        # Procesar las alternativas solo para los códigos de artículo que subes
+        alternativas = procesar_alternativas(inventario_api_df, codigos_articulos)
+
+        # Mostrar las alternativas
+        if not alternativas.empty:
             st.write("Alternativas disponibles para los códigos ingresados:")
-            st.dataframe(resultados)
+            st.dataframe(alternativas)
 
-            # Selector de opciones
-            opciones_disponibles = resultados['opcion'].unique()  # Obtener las opciones únicas
-            opcion_seleccionada = st.selectbox('Selecciona la opción que quieres descargar', opciones_disponibles)
+            # Botón para seleccionar cuántas opciones quieres ver
+            num_opciones = st.slider("Selecciona el número de opciones a mostrar por artículo", 1, 5, 3)
 
-            # Filtrar los resultados por la opción seleccionada
-            if opcion_seleccionada is not None:
-                opciones_filtradas = procesar_alternativas(inventario_api_df, None, opcion_seleccionada)
-                st.write(f"Alternativas para la opción {opcion_seleccionada}:")
-                st.dataframe(opciones_filtradas)
+            # Mostrar solo las primeras 'num_opciones' alternativas
+            alternativas_limited = alternativas.groupby('codart').head(num_opciones)
+            st.write(f"Mostrando las primeras {num_opciones} opciones por artículo:")
+            st.dataframe(alternativas_limited)
 
-                # Generar archivo Excel para descargar
-                excel_file = generar_excel(opciones_filtradas)
-                st.download_button(
-                    label="Descargar archivo Excel con alternativas filtradas",
-                    data=excel_file,
-                    file_name=f"alternativas_opcion_{opcion_seleccionada}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
+            # Generar archivo Excel para descargar
+            excel_file = generar_excel(alternativas_limited)
+            st.download_button(
+                label="Descargar archivo Excel con alternativas seleccionadas",
+                data=excel_file,
+                file_name="alternativas_seleccionadas.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
         else:
             st.write("No se encontraron alternativas para los códigos ingresados.")
     else:
