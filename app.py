@@ -2,14 +2,14 @@ import streamlit as st
 import pandas as pd
 from io import BytesIO
 
-# Función para cargar el archivo de inventario de Google Sheets
+# Función para cargar el inventario de Google Sheets
 def load_inventory_file():
     inventario_url = "https://docs.google.com/spreadsheets/d/1Y9SgliayP_J5Vi2SdtZmGxKWwf1iY7ma/export?format=xlsx"
     inventario_api_df = pd.read_excel(inventario_url, sheet_name="Hoja1")
     return inventario_api_df
 
 # Función para procesar las alternativas para un solo código de artículo
-def procesar_alternativas(inventario_api_df, codigo_articulo):
+def procesar_alternativas(inventario_api_df, codigo_articulo, opcion_seleccionada=None):
     # Filtrar el inventario según el código de artículo (codart) ingresado y obtener el 'cur' correspondiente
     cur_articulo = inventario_api_df[inventario_api_df['codart'] == codigo_articulo]['cur'].values
 
@@ -19,6 +19,10 @@ def procesar_alternativas(inventario_api_df, codigo_articulo):
     
     # Buscar las alternativas disponibles con el mismo CUR
     alternativas_disponibles_df = inventario_api_df[inventario_api_df['cur'] == cur_articulo[0]]
+
+    # Si se seleccionó una opción, filtrar por 'opcion'
+    if opcion_seleccionada is not None:
+        alternativas_disponibles_df = alternativas_disponibles_df[alternativas_disponibles_df['opcion'] == opcion_seleccionada]
 
     # Excluir filas donde 'opcion' sea igual a 0
     alternativas_disponibles_df = alternativas_disponibles_df[alternativas_disponibles_df['opcion'] != 0]
@@ -51,7 +55,7 @@ if uploaded_file:
 
     # Verificar que el archivo tenga la columna 'codart'
     if 'codart' in df_subido.columns:
-        # Procesar alternativas para cada código en el archivo subido
+        # Procesar alternativas solo para los códigos en el archivo subido
         resultados = pd.DataFrame()  # DataFrame vacío para acumular los resultados
 
         for codart in df_subido['codart']:
@@ -65,14 +69,24 @@ if uploaded_file:
             st.write("Alternativas disponibles para los códigos ingresados:")
             st.dataframe(resultados)
 
-            # Generar archivo Excel para descargar
-            excel_file = generar_excel(resultados)
-            st.download_button(
-                label="Descargar archivo Excel con alternativas",
-                data=excel_file,
-                file_name="alternativas_disponibles.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
+            # Selector de opciones
+            opciones_disponibles = resultados['opcion'].unique()  # Obtener las opciones únicas
+            opcion_seleccionada = st.selectbox('Selecciona la opción que quieres descargar', opciones_disponibles)
+
+            # Filtrar los resultados por la opción seleccionada
+            if opcion_seleccionada is not None:
+                opciones_filtradas = procesar_alternativas(inventario_api_df, None, opcion_seleccionada)
+                st.write(f"Alternativas para la opción {opcion_seleccionada}:")
+                st.dataframe(opciones_filtradas)
+
+                # Generar archivo Excel para descargar
+                excel_file = generar_excel(opciones_filtradas)
+                st.download_button(
+                    label="Descargar archivo Excel con alternativas filtradas",
+                    data=excel_file,
+                    file_name=f"alternativas_opcion_{opcion_seleccionada}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
         else:
             st.write("No se encontraron alternativas para los códigos ingresados.")
     else:
