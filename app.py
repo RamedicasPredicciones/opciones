@@ -32,9 +32,19 @@ def procesar_alternativas(inventario_api_df, codigo_articulo, opcion_seleccionad
     if opcion_seleccionada is not None:
         alternativas_disponibles_df = alternativas_disponibles_df.head(opcion_seleccionada)
 
-    # Incluir solo las columnas seleccionadas
-    columnas_basicas = ['cur', 'codart', 'medvitdisp', 'bodega']  # columnas básicas siempre incluidas
-    columnas_finales = columnas_basicas + columnas_adicionales
+    # Incluir solo las columnas seleccionadas que existen en el DataFrame
+    columnas_basicas = ['cur', 'codart', 'medvitdisp', 'bodega']
+    columnas_finales = [col for col in (columnas_basicas + columnas_adicionales) if col in alternativas_disponibles_df.columns]
+
+    # Verificar que las columnas_finales estén en el DataFrame
+    st.write(f"Columnas disponibles en el DataFrame: {alternativas_disponibles_df.columns.tolist()}")
+    st.write(f"Columnas seleccionadas: {columnas_finales}")
+
+    # Si alguna columna no está presente, mostramos un mensaje
+    if not all(col in alternativas_disponibles_df.columns for col in columnas_finales):
+        missing_cols = [col for col in columnas_finales if col not in alternativas_disponibles_df.columns]
+        st.write(f"Faltan las siguientes columnas en el DataFrame: {missing_cols}")
+
     alternativas_disponibles_df = alternativas_disponibles_df[columnas_finales]
 
     return alternativas_disponibles_df
@@ -49,7 +59,7 @@ inventario_api_df = load_inventory_file()
 codigo_articulo = st.text_input("Ingrese el código del artículo (codart):")
 
 # Selección de columnas adicionales
-columnas_disponibles = ["emb", "nomart", "presentación", "cum"]
+columnas_disponibles = ["emb", "nomart", "presentación", "precio_control_directo", "cum", "n_comercial"]
 columnas_adicionales = st.multiselect(
     "Selecciona columnas adicionales para incluir en el archivo final:",
     options=columnas_disponibles,
@@ -92,3 +102,4 @@ if codigo_articulo:
         )
     else:
         st.write("No se encontraron alternativas para el código ingresado.")
+
