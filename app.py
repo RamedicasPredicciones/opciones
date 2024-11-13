@@ -1,77 +1,87 @@
 import streamlit as st
 import pandas as pd
+from io import BytesIO
 
-# Cargar archivos privados de manera segura
-@st.cache_data
-def load_private_files():
-    maestro_moleculas_df = pd.read_excel('Maestro_Moleculas.xlsx')
-    inventario_api_df = pd.read_excel('Inventario.xlsx')
-    return maestro_moleculas_df, inventario_api_df
+# Cargar archivo de Google Sheets desde el enlace proporcionado
+def load_inventory_file():
+    inventario_url = "https://docs.google.com/spreadsheets/d/1Y9SgliayP_J5Vi2SdtZmGxKWwf1iY7ma/export?format=xlsx"
+    inventario_api_df = pd.read_excel(inventario_url, sheet_name="Hoja1")
+    return inventario_api_df
 
-# Función para procesar el archivo de faltantes y generar el resultado
-def procesar_faltantes(faltantes_df, maestro_moleculas_df, inventario_api_df):
-    faltantes_df.columns = faltantes_df.columns.str.lower().str.strip()
-    maestro_moleculas_df.columns = maestro_moleculas_df.columns.str.lower().str.strip()
-    inventario_api_df.columns = inventario_api_df.columns.str.lower().str.strip()
+# Función para procesar las alternativas
+def procesar_alternativas(inventario_api_df, codigo_producto, opcion_seleccionada=None, columnas_adicionales=[]):
+    # Filtrar el inventario según el código de producto ingresado
+    alternativas_disponibles_df = inventario_api_df[inventario_api_df['cur'] == codigo_producto]
 
-    cur_faltantes = faltantes_df['cur'].unique()
-    codart_faltantes = faltantes_df['codart'].unique()
+    # Ordenar por la cantidad disponible
+    alternativas_disponibles_df = alternativas_disponibles_df[alternativas_disponibles_df['unidadespresentacionlote'] > 0]
+    alternativas_disponibles_df.sort_values(by='unidadespresentacionlote', ascending=False, inplace=True)
 
-    alternativas_df = maestro_moleculas_df[maestro_moleculas_df['cur'].isin(cur_faltantes)]
+    # Filtrar si se seleccionó una opción específica
+    if opcion_seleccionada is not None:
+        alternativas_disponibles_df = alternativas_disponibles_df.head(opcion_seleccionada)
 
-    alternativas_inventario_df = pd.merge(
-        alternativas_df,
-        inventario_api_df,
-        on='cur',
-        how='inner',
-        suffixes=('_alternativas', '_inventario')
-    )
+    # Incluir solo las columnas seleccionadas
+    columnas_basicas = ['cur', 'codart', 'unidadespresentacionlote', 'bodega']  # columnas siempre incluidas
+    columnas_finales = columnas_basicas + columnas_adicionales
+    alternativas_disponibles_df = alternativas_disponibles_df[columnas_finales]
 
-    alternativas_disponibles_df = alternativas_inventario_df[
-        (alternativas_inventario_df['cantidad'] > 0) &
-        (alternativas_inventario_df['codart_alternativas'].isin(codart_faltantes))
-    ]
-
-    columnas_deseadas = [
-        'codart_alternativas', 'cur', 'opcion_inventario', 'codart_inventario', 'cantidad', 'bodega'
-    ]
-    columnas_presentes = [col for col in columnas_deseadas if col in alternativas_disponibles_df.columns]
-    alternativas_disponibles_df = alternativas_disponibles_df[columnas_presentes]
-
-    alternativas_disponibles_df.rename(columns={
-        'codart_alternativas': 'codart_faltante',
-        'opcion_inventario': 'opcion_alternativa',
-        'codart_inventario': 'codart_alternativa'
-    }, inplace=True)
-
-    resultado_final_df = pd.merge(
-        faltantes_df[['cur', 'codart']],
-        alternativas_disponibles_df,
-        left_on=['cur', 'codart'],
-        right_on=['cur', 'codart_faltante'],
-        how='inner'
-    )
-
-    return resultado_final_df
+    return alternativas_disponibles_df
 
 # Streamlit UI
-st.title('Generador de Alternativas de Faltantes')
+st.title('Buscador de Alternativas por Código')
 
-uploaded_file = st.file_uploader("Sube tu archivo de faltantes", type="xlsx")
+# Botón para actualizar inventario
+if st.button('Actualizar inventario'):
+    st.cache_data.clear()
 
-if uploaded_file:
-    faltantes_df = pd.read_excel(uploaded_file)
-    maestro_moleculas_df, inventario_api_df = load_private_files()
+# Cargar inventario
+inventario_api_df = load_inventory_file()
 
-    resultado_final_df = procesar_faltantes(faltantes_df, maestro_moleculas_df, inventario_api_df)
+# Campo para ingresar el código del producto
+codigo_producto = st.text_input("Ingrese el código del producto (CUR):")
 
-    st.write("Archivo procesado correctamente.")
-    st.dataframe(resultado_final_df)
+# Selección de columnas adicionales
+columnas_disponibles = ["emb", "nomart", "presentacionart", "numlote", "fechavencelote"]
+columnas_adicionales = st.multiselect(
+    "Selecciona columnas adicionales para incluir en el archivo final:",
+    options=columnas_disponibles,
+    default=["emb", "nomart"]
+)
 
-    # Botón para descargar el archivo generado
-    st.download_button(
-        label="Descargar archivo de alternativas",
-        data=resultado_final_df.to_excel(index=False, engine='openpyxl'),
-        file_name='alternativas_disponibles.xlsx',
-        mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    )
+if codigo_producto:
+    # Mostrar opciones de alternativas si hay resultados
+    opciones_disponibles = procesar_alternativas(inventario_api_df, codigo_producto, columnas_adicionales=columnas_adicionales)
+
+    if not opciones_disponibles.empty:
+        st.write("Alternativas disponibles:")
+        st.dataframe(opciones_disponibles)
+
+        # Seleccionar el número de la mejor opción
+        opcion_seleccionada = st.number_input(
+            "Ingrese el número de la alternativa que desea ver:",
+            min_value=1,
+            max_value=len(opciones_disponibles),
+            step=1
+        )
+
+        # Filtrar por opción seleccionada y mostrar
+        alternativa_seleccionada_df = procesar_alternativas(inventario_api_df, codigo_producto, opcion_seleccionada, columnas_adicionales)
+        st.write("Alternativa seleccionada:")
+        st.dataframe(alternativa_seleccionada_df)
+
+        # Función para exportar a Excel
+        def to_excel(df):
+            output = BytesIO()
+            with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                df.to_excel(writer, index=False, sheet_name='Alternativa')
+            return output.getvalue()
+
+        st.download_button(
+            label="Descargar alternativa seleccionada",
+            data=to_excel(alternativa_seleccionada_df),
+            file_name=f'alternativa_{codigo_producto}.xlsx',
+            mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+    else:
+        st.write("No se encontraron alternativas para el código ingresado.")
