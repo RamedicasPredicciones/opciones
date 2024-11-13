@@ -55,20 +55,22 @@ if uploaded_file:
             st.write("Alternativas disponibles para los códigos ingresados:")
             st.dataframe(alternativas)
 
-            # Botón para seleccionar cuántas opciones quieres ver
-            num_opciones = st.slider("Selecciona el número de opciones a mostrar por artículo", 1, 5, 3)
+            # Selección de la opción (de 1 a 16)
+            opcion_seleccionada = st.selectbox("Selecciona la opción a ver", range(1, 17))
 
-            # Mostrar solo las primeras 'num_opciones' alternativas
-            alternativas_limited = alternativas.groupby('codart').head(num_opciones)
-            st.write(f"Mostrando las primeras {num_opciones} opciones por artículo:")
-            st.dataframe(alternativas_limited)
+            # Filtrar las alternativas para mostrar solo la opción seleccionada
+            alternativas_filtradas = alternativas[alternativas['opcion'] == opcion_seleccionada]
+
+            # Mostrar las alternativas filtradas
+            st.write(f"Mostrando alternativas para la opción {opcion_seleccionada}:")
+            st.dataframe(alternativas_filtradas)
 
             # Generar archivo Excel para descargar
-            excel_file = generar_excel(alternativas_limited)
+            excel_file = generar_excel(alternativas_filtradas)
             st.download_button(
-                label="Descargar archivo Excel con alternativas seleccionadas",
+                label="Descargar archivo Excel con la opción seleccionada",
                 data=excel_file,
-                file_name="alternativas_seleccionadas.xlsx",
+                file_name=f"alternativas_opcion_{opcion_seleccionada}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
         else:
