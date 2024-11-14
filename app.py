@@ -85,7 +85,3 @@ if uploaded_file:
             st.write("No se encontraron alternativas para los códigos ingresados.")
     else:
         st.error("El archivo de faltantes debe contener las columnas: 'cur', 'embalaje' y 'codart'.")
-
-            st.write("No se encontraron alternativas para los códigos ingresados.")
-    else:
-        st.error("El archivo subido no contiene la columna 'codart'.")
