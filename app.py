@@ -51,9 +51,6 @@ def descargar_plantilla():
     return plantilla_url
 
 # Interfaz de Streamlit
-st.title('Buscador de Alternativas por Código de Artículo')
-
-# Interfaz de Streamlit
 st.markdown(
     """
     <h1 style="text-align: center; color: #FF5800; font-family: Arial, sans-serif;">
@@ -68,9 +65,6 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-
-
-
 
 # Botón para descargar la plantilla
 st.markdown(
