@@ -48,7 +48,7 @@ def generar_excel(df):
 st.title('Buscador de Alternativas por Código de Artículo')
 
 # Subir archivo de faltantes
-uploaded_file = st.file_uploader("Sube un archivo con los productos faltantes (contiene 'cur', 'codart', 'embalaje')", type=["xlsx", "csv"])
+uploaded_file = st.file_uploader("Sube un archivo con los productos faltantes (contiene 'cur', 'codart', 'embalajeeeee')", type=["xlsx", "csv"])
 
 if uploaded_file:
     # Leer el archivo subido
@@ -84,7 +84,7 @@ if uploaded_file:
             # Generar archivo Excel para descargar
             excel_file = generar_excel(alternativas_filtradas)
             st.download_button(
-                label="Descargar archivo Excel con las opciones seleccionadassssss",
+                label="Descargar archivo Excel con las opciones seleccionadas",
                 data=excel_file,
                 file_name=f"alternativas_opciones_seleccionadas.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
