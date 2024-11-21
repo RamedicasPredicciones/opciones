@@ -44,11 +44,29 @@ def generar_excel(df):
     output.seek(0)
     return output
 
+# Función para descargar la plantilla
+def descargar_plantilla():
+    # URL de la plantilla en Google Sheets
+    plantilla_url = "https://docs.google.com/spreadsheets/d/1CRTYE0hbMlV8FiOeVDgDjGUm7x8E-XA8/export?format=xlsx"
+    return plantilla_url
+
 # Interfaz de Streamlit
 st.title('Buscador de Alternativas por Código de Artículo')
 
+# Botón para descargar la plantilla
+st.markdown(
+    f"""
+    <a href="{descargar_plantilla()}" download>
+        <button style="background-color: #FF5800; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer;">
+            Descargar plantilla de faltantes
+        </button>
+    </a>
+    """,
+    unsafe_allow_html=True
+)
+
 # Subir archivo de faltantes
-uploaded_file = st.file_uploader("Sube un archivo con los productos faltantes (contiene 'cur', 'codart', 'embalajeeeee')", type=["xlsx", "csv"])
+uploaded_file = st.file_uploader("Sube un archivo con los productos faltantes (contiene 'cur', 'codart', 'embalaje')", type=["xlsx", "csv"])
 
 if uploaded_file:
     # Leer el archivo subido
