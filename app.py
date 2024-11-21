@@ -84,7 +84,7 @@ if uploaded_file:
             # Generar archivo Excel para descargar
             excel_file = generar_excel(alternativas_filtradas)
             st.download_button(
-                label="Descargar archivo Excel con las opciones seleccionadas",
+                label="Descargar archivo Excel con las opciones seleccionadassssss",
                 data=excel_file,
                 file_name=f"alternativas_opciones_seleccionadas.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
