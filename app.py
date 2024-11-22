@@ -106,13 +106,29 @@ if uploaded_file:
         st.write("Alternativas disponibles para los productos faltantes:")
         st.dataframe(alternativas_disponibles_df)
 
-        # Generar archivo Excel para descargar
-        excel_file = generar_excel(alternativas_disponibles_df)
-        st.download_button(
-            label="Descargar archivo Excel con las alternativas",
-            data=excel_file,
-            file_name="alternativas_disponibles.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        # Permitir seleccionar opciones
+        opciones_disponibles = alternativas_disponibles_df['opcion'].unique()
+        opciones_seleccionadas = st.multiselect(
+            "Selecciona las opciones que deseas ver (puedes elegir varias):",
+            options=opciones_disponibles
         )
+
+        # Filtrar según las opciones seleccionadas
+        if opciones_seleccionadas:
+            alternativas_filtradas = alternativas_disponibles_df[alternativas_disponibles_df['opcion'].isin(opciones_seleccionadas)]
+            st.write(f"Mostrando alternativas para las opciones seleccionadas: {', '.join(map(str, opciones_seleccionadas))}")
+            st.dataframe(alternativas_filtradas)
+
+            # Generar archivo Excel para descargar
+            excel_file = generar_excel(alternativas_filtradas)
+            st.download_button(
+                label="Descargar archivo Excel con las opciones seleccionadas",
+                data=excel_file,
+                file_name="alternativas_filtradas.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+        else:
+            st.write("No has seleccionado ninguna opción para mostrar.")
     else:
         st.write("No se encontraron alternativas para los códigos ingresados.")
+
