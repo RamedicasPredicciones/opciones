@@ -4,7 +4,8 @@ from io import BytesIO
 
 # Función para cargar el inventario desde Google Sheets
 def load_inventory_file():
-    inventario_url = "https://docs.google.com/spreadsheets/d/1Y9SgliayP_J5Vi2SdtZmGxKWwf1iY7ma/export?format=xlsx"
+    # Enlace actualizado para el inventario
+    inventario_url = "https://docs.google.com/spreadsheets/d/19myWtMrvsor2P_XHiifPgn8YKdTWE39O/export?format=xlsx"
     inventario_api_df = pd.read_excel(inventario_url, sheet_name="Hoja1")
     return inventario_api_df
 
@@ -34,9 +35,9 @@ def procesar_alternativas(faltantes_df, inventario_api_df):
         how='inner'
     )
 
-    # Incluir la columna 'Carta' en el resultado final
-    if 'Carta' in inventario_api_df.columns:
-        alternativas_disponibles_df['Carta'] = alternativas_disponibles_df['Carta']
+    # Incluir la columna 'carta' en el resultado final si está disponible
+    if 'carta' in inventario_api_df.columns:
+        alternativas_disponibles_df['carta'] = alternativas_disponibles_df['carta']
 
     return alternativas_disponibles_df
 
@@ -128,4 +129,5 @@ if uploaded_file:
             st.write("No has seleccionado ninguna opción para mostrar.")
     else:
         st.write("No se encontraron alternativas para los códigos ingresados.")
+
 
