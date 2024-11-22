@@ -34,9 +34,9 @@ def procesar_alternativas(faltantes_df, inventario_api_df):
         how='inner'
     )
 
-    # Incluir la columna 'carta' en el resultado final
-    if 'carta' in inventario_api_df.columns:
-        alternativas_disponibles_df['carta'] = alternativas_disponibles_df['carta']
+    # Incluir la columna 'Carta' en el resultado final
+    if 'Carta' in inventario_api_df.columns:
+        alternativas_disponibles_df['Carta'] = alternativas_disponibles_df['Carta']
 
     return alternativas_disponibles_df
 
