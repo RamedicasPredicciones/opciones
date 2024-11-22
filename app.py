@@ -31,6 +31,9 @@ def procesar_alternativas(faltantes_df, inventario_api_df):
             st.error(f"La columna '{columna}' no se encuentra en el inventario. Verifica el archivo de origen.")
             st.stop()
 
+    # Convertir la columna 'opcion' a enteros
+    alternativas_inventario_df['opcion'] = alternativas_inventario_df['opcion'].fillna(0).astype(int)
+
     # Seleccionar las columnas requeridas
     alternativas_disponibles_df = alternativas_inventario_df[columnas_necesarias]
 
@@ -110,7 +113,7 @@ if uploaded_file:
         opciones_disponibles = alternativas_disponibles_df['opcion'].unique()
         opciones_seleccionadas = st.multiselect(
             "Selecciona las opciones que deseas ver (puedes elegir varias):",
-            options=opciones_disponibles
+            options=sorted(opciones_disponibles)
         )
 
         # Filtrar según las opciones seleccionadas
