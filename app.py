@@ -25,7 +25,7 @@ def procesar_alternativas(faltantes_df, inventario_api_df):
     alternativas_inventario_df = inventario_api_df[inventario_api_df['cur'].isin(cur_faltantes)]
 
     # Excluir opciones sin stock
-    alternativas_disponibles_df = alternativas_inventario_df[alternativas_inventario_df['opcion'] != 0]
+    alternativas_disponibles_df = alternativas_inventario_df[alternativas_inventario_df['Opcion'] != 0]
 
     # Combinar los faltantes con las alternativas disponibles
     alternativas_disponibles_df = pd.merge(
@@ -105,7 +105,7 @@ if uploaded_file:
         st.dataframe(alternativas_disponibles_df)
 
         # Obtener las opciones únicas para seleccionar
-        opciones_disponibles = alternativas_disponibles_df['opcion'].unique()
+        opciones_disponibles = alternativas_disponibles_df['Opcion'].unique()
         opciones_seleccionadas = st.multiselect(
             "Selecciona las opciones que deseas ver (puedes elegir varias)",
             options=opciones_disponibles
@@ -113,7 +113,7 @@ if uploaded_file:
 
         # Filtrar las alternativas para mostrar solo las opciones seleccionadas
         if opciones_seleccionadas:
-            alternativas_filtradas = alternativas_disponibles_df[alternativas_disponibles_df['opcion'].isin(opciones_seleccionadas)]
+            alternativas_filtradas = alternativas_disponibles_df[alternativas_disponibles_df['Opcion'].isin(opciones_seleccionadas)]
             st.write(f"Mostrando alternativas para las opciones seleccionadas: {', '.join(map(str, opciones_seleccionadas))}")
             st.dataframe(alternativas_filtradas)
 
