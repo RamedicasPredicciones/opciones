@@ -34,6 +34,10 @@ def procesar_alternativas(faltantes_df, inventario_api_df):
         how='inner'
     )
 
+    # Incluir la columna 'carta' en el resultado final
+    if 'carta' in inventario_api_df.columns:
+        alternativas_disponibles_df['carta'] = alternativas_disponibles_df['carta']
+
     return alternativas_disponibles_df
 
 # Función para generar un archivo Excel
@@ -60,7 +64,7 @@ st.markdown(
         Buscador de Alternativas por Código de Artículo
     </h3>
     <p style="text-align: center; font-family: Arial, sans-serif; color: #6B6B6B;">
-        Esta herramienta te permite buscar y consultar los códigos alernativos de productos con las opciones deseadas de manera eficiente y rápida.
+        Esta herramienta te permite buscar y consultar los códigos alternativos de productos con las opciones deseadas de manera eficiente y rápida.
     </p>
     """,
     unsafe_allow_html=True
@@ -124,3 +128,4 @@ if uploaded_file:
             st.write("No has seleccionado ninguna opción para mostrar.")
     else:
         st.write("No se encontraron alternativas para los códigos ingresados.")
+
