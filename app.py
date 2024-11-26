@@ -51,7 +51,7 @@ def generar_excel(df):
 
 # Función para descargar la plantilla
 def descargar_plantilla():
-    plantilla_url = "https://docs.google.com/spreadsheets/d/1CRTYE0hbMlV8FiOeVDgDjGUm7x8E-XA8/export?format=xlsx"
+    plantilla_url = "https://docs.google.com/spreadsheets/d/1DWK-kyp5fy_AmjDrj9UUiiWIynT6ob3N/export?format=xlsx"
     return plantilla_url
 
 # Interfaz de Streamlit
