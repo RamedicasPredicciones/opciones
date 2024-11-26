@@ -6,7 +6,7 @@ from io import BytesIO
 def load_inventory_file():
     # Enlace al archivo del inventario en Google Sheets
     inventario_url = "https://docs.google.com/spreadsheets/d/19myWtMrvsor2P_XHiifPgn8YKdTWE39O/export?format=xlsx"
-    inventario_api_df = pd.read_excel(inventario_url, sheet_name="Hoja3")
+    inventario_api_df = pd.read_excel(inventario_url, sheet_name="Hoja1")
     inventario_api_df.columns = inventario_api_df.columns.str.lower().str.strip()  # Asegurar nombres consistentes
     return inventario_api_df
 
@@ -25,7 +25,7 @@ def procesar_alternativas(faltantes_df, inventario_api_df):
     alternativas_inventario_df = inventario_api_df[inventario_api_df['cur'].isin(cur_faltantes)]
 
     # Verificar si las columnas necesarias existen en el inventario
-    columnas_necesarias = ['codart', 'cur', 'opcion', 'embalaje']
+    columnas_necesarias = ['codart', 'cur', 'opcion']
     for columna in columnas_necesarias:
         if columna not in alternativas_inventario_df.columns:
             st.error(f"La columna '{columna}' no se encuentra en el inventario. Verifica el archivo de origen.")
@@ -36,20 +36,16 @@ def procesar_alternativas(faltantes_df, inventario_api_df):
 
     # Renombrar columnas para diferenciarlas como alternativas
     alternativas_inventario_df = alternativas_inventario_df.rename(columns={
-        'codart': 'codart_alternativa',
-        'embalaje': 'embalaje_alternativa'
+        'codart': 'codart_alternativa'
     })
 
     # Combinar los faltantes con las alternativas disponibles
     alternativas_disponibles_df = pd.merge(
         faltantes_df,
-        alternativas_inventario_df[['cur', 'codart_alternativa', 'opcion', 'embalaje_alternativa']],
+        alternativas_inventario_df[['cur', 'codart_alternativa', 'opcion']],
         on='cur',
         how='inner'
     )
-
-    # Crear una columna que combine 'codart' y 'opcion'
-    alternativas_disponibles_df['codart:opcion'] = alternativas_disponibles_df['codart_alternativa'].astype(str) + ':' + alternativas_disponibles_df['opcion'].astype(str)
 
     return alternativas_disponibles_df
 
@@ -63,7 +59,7 @@ def generar_excel(df):
 
 # Función para descargar la plantilla
 def descargar_plantilla():
-    plantilla_url = "https://docs.google.com/spreadsheets/d/1DWK-kyp5fy_AmjDrj9UUiiWIynT6ob3N/export?format=xlsx"
+    plantilla_url = "https://docs.google.com/spreadsheets/d/1CRTYE0hbMlV8FiOeVDgDjGUm7x8E-XA8/export?format=xlsx"
     return plantilla_url
 
 # Interfaz de Streamlit
@@ -113,10 +109,10 @@ if uploaded_file:
     # Mostrar las alternativas
     if not alternativas_disponibles_df.empty:
         st.write("Alternativas disponibles para los productos faltantes:")
-        st.dataframe(alternativas_disponibles_df)
+        st.dataframe(alternativas_disponibles_df[['codart', 'cur', 'codart_alternativa', 'opcion']])
 
         # Generar archivo Excel para descargar
-        excel_file = generar_excel(alternativas_disponibles_df)
+        excel_file = generar_excel(alternativas_disponibles_df[['codart', 'cur', 'codart_alternativa', 'opcion']])
         st.download_button(
             label="Descargar archivo Excel con todas las alternativas",
             data=excel_file,
