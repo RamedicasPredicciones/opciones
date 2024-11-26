@@ -102,7 +102,7 @@ if uploaded_file:
         opciones_seleccionadas = st.multiselect(
             "Selecciona las opciones que deseas visualizar:",
             options=opciones_disponibles,
-            default=opciones_disponibles
+            default=[]  # Sin opciones seleccionadas por defecto
         )
 
         # Filtrar el dataframe según las opciones seleccionadas
@@ -113,12 +113,15 @@ if uploaded_file:
         st.write("Alternativas disponibles filtradas:")
         st.dataframe(alternativas_filtradas_df[['codart', 'cur', 'codart_alternativa', 'opcion']])
 
-        excel_file = generar_excel(alternativas_filtradas_df[['codart', 'cur', 'codart_alternativa', 'opcion']])
-        st.download_button(
-            label="Descargar archivo Excel con las alternativas filtradas",
-            data=excel_file,
-            file_name="alternativas_filtradas.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+        if not alternativas_filtradas_df.empty:
+            excel_file = generar_excel(alternativas_filtradas_df[['codart', 'cur', 'codart_alternativa', 'opcion']])
+            st.download_button(
+                label="Descargar archivo Excel con las alternativas filtradas",
+                data=excel_file,
+                file_name="alternativas_filtradas.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+        else:
+            st.write("No hay alternativas disponibles para las opciones seleccionadas.")
     else:
         st.write("No se encontraron alternativas para los códigos ingresados.")
