@@ -20,7 +20,7 @@ def procesar_alternativas(faltantes_df, inventario_api_df):
     cur_faltantes = faltantes_df['cur'].unique()
     alternativas_inventario_df = inventario_api_df[inventario_api_df['cur'].isin(cur_faltantes)]
 
-    columnas_necesarias = ['codart', 'cur', 'opcion', 'nomart', 'carta']
+    columnas_necesarias = ['codart', 'cur', 'opcion', 'nomart', 'carta', 'descontinuado']
     for columna in columnas_necesarias:
         if columna not in alternativas_inventario_df.columns:
             st.error(f"La columna '{columna}' no se encuentra en el inventario. Verifica el archivo de origen.")
@@ -32,9 +32,12 @@ def procesar_alternativas(faltantes_df, inventario_api_df):
         'codart': 'codart_alternativa'
     })
 
+    # Se agrega la columna 'descontinuado' al DataFrame de alternativas
+    alternativas_inventario_df = alternativas_inventario_df[['cur', 'codart_alternativa', 'opcion', 'nomart', 'carta', 'descontinuado']]
+
     alternativas_disponibles_df = pd.merge(
         faltantes_df,
-        alternativas_inventario_df[['cur', 'codart_alternativa', 'opcion', 'nomart', 'carta']],
+        alternativas_inventario_df,
         on='cur',
         how='inner'
     )
@@ -113,10 +116,10 @@ if uploaded_file:
         ]
 
         st.write("Alternativas disponibles filtradas:")
-        st.dataframe(alternativas_filtradas_df[['codart', 'cur', 'codart_alternativa', 'opcion', 'nomart', 'carta']])
+        st.dataframe(alternativas_filtradas_df[['codart', 'cur', 'codart_alternativa', 'opcion', 'nomart', 'carta', 'descontinuado']])
 
         if not alternativas_filtradas_df.empty:
-            excel_file = generar_excel(alternativas_filtradas_df[['codart', 'cur', 'codart_alternativa', 'opcion', 'nomart', 'carta']])
+            excel_file = generar_excel(alternativas_filtradas_df[['codart', 'cur', 'codart_alternativa', 'opcion', 'nomart', 'carta', 'descontinuado']])
             st.download_button(
                 label="Descargar archivo Excel con las alternativas filtradas",
                 data=excel_file,
