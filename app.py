@@ -20,7 +20,7 @@ def procesar_alternativas(faltantes_df, inventario_api_df):
     cur_faltantes = faltantes_df['cur'].unique()
     alternativas_inventario_df = inventario_api_df[inventario_api_df['cur'].isin(cur_faltantes)]
 
-    columnas_necesarias = ['codart', 'cur', 'opcion', 'nomart', 'carta', 'descontinuado']
+    columnas_necesarias = ['codart', 'cur', 'opcion', 'nomart', 'carta']
     for columna in columnas_necesarias:
         if columna not in alternativas_inventario_df.columns:
             st.error(f"La columna '{columna}' no se encuentra en el inventario. Verifica el archivo de origen.")
@@ -34,7 +34,7 @@ def procesar_alternativas(faltantes_df, inventario_api_df):
 
     alternativas_disponibles_df = pd.merge(
         faltantes_df,
-        alternativas_inventario_df[['cur', 'codart_alternativa', 'opcion', 'nomart', 'carta', 'descontinuado']],
+        alternativas_inventario_df[['cur', 'codart_alternativa', 'opcion', 'nomart', 'carta']],
         on='cur',
         how='inner'
     )
@@ -107,17 +107,16 @@ if uploaded_file:
             default=[]  # Sin opciones seleccionadas por defecto
         )
 
-        # Crear columnas de opción basadas en las opciones seleccionadas
-        if opciones_seleccionadas:
-            for idx, opcion in enumerate(opciones_seleccionadas):
-                alternativas_disponibles_df[f'opcion{idx+1}'] = alternativas_disponibles_df['opcion'].apply(
-                    lambda x: x if x == opcion else None)
+        # Filtrar el dataframe según las opciones seleccionadas
+        alternativas_filtradas_df = alternativas_disponibles_df[
+            alternativas_disponibles_df['opcion'].isin(opciones_seleccionadas)
+        ]
 
         st.write("Alternativas disponibles filtradas:")
-        st.dataframe(alternativas_disponibles_df[['codart', 'cur', 'codart_alternativa', 'opcion', 'nomart', 'carta', 'descontinuado']])
+        st.dataframe(alternativas_filtradas_df[['codart', 'cur', 'codart_alternativa', 'opcion', 'nomart', 'carta']])
 
-        if not alternativas_disponibles_df.empty:
-            excel_file = generar_excel(alternativas_disponibles_df[['codart', 'cur', 'codart_alternativa', 'opcion', 'nomart', 'carta', 'descontinuado']])
+        if not alternativas_filtradas_df.empty:
+            excel_file = generar_excel(alternativas_filtradas_df[['codart', 'cur', 'codart_alternativa', 'opcion', 'nomart', 'carta']])
             st.download_button(
                 label="Descargar archivo Excel con las alternativas filtradas",
                 data=excel_file,
