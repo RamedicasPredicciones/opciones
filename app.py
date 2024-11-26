@@ -113,19 +113,40 @@ if uploaded_file:
                 alternativas_disponibles_df[f'opcion{idx+1}'] = alternativas_disponibles_df['opcion'].apply(
                     lambda x: x if x == opcion else None)
 
-        # Resaltar filas donde 'descontinuado' es 'SI' con color rojo
+        # Crear una columna para el resaltado con CSS
         alternativas_disponibles_df['highlight'] = alternativas_disponibles_df['descontinuado'].apply(
             lambda x: 'background-color: red' if x == 'SI' else ''
         )
 
-        # Aplicar el estilo de resaltar las filas con 'SI' en 'descontinuado'
-        styled_df = alternativas_disponibles_df.style.apply(
-            lambda x: [x['highlight'] for _ in x], axis=1, subset=['highlight']
-        )
-
-        # Mostrar la tabla con el estilo aplicado
+        # Mostrar la tabla con el estilo de resaltado
         st.write("Alternativas disponibles filtradas:")
-        st.dataframe(styled_df)
+        st.markdown(
+            """
+            <style>
+                .highlight-red {
+                    background-color: red;
+                    color: white;
+                }
+            </style>
+            """, unsafe_allow_html=True)
+
+        # Construir HTML para la tabla con resaltado
+        table_html = "<table><thead><tr>"
+        for col in alternativas_disponibles_df.columns:
+            table_html += f"<th>{col}</th>"
+        table_html += "</tr></thead><tbody>"
+
+        for index, row in alternativas_disponibles_df.iterrows():
+            table_html += "<tr>"
+            for col in alternativas_disponibles_df.columns:
+                if row['highlight']:
+                    table_html += f'<td class="highlight-red">{row[col]}</td>'
+                else:
+                    table_html += f'<td>{row[col]}</td>'
+            table_html += "</tr>"
+
+        table_html += "</tbody></table>"
+        st.markdown(table_html, unsafe_allow_html=True)
 
         if not alternativas_disponibles_df.empty:
             excel_file = generar_excel(alternativas_disponibles_df[['codart', 'cur', 'codart_alternativa', 'opcion', 'nomart', 'carta', 'descontinuado']])
