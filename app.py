@@ -113,8 +113,19 @@ if uploaded_file:
                 alternativas_disponibles_df[f'opcion{idx+1}'] = alternativas_disponibles_df['opcion'].apply(
                     lambda x: x if x == opcion else None)
 
+        # Resaltar filas donde 'descontinuado' es 'SI' con color rojo
+        alternativas_disponibles_df['highlight'] = alternativas_disponibles_df['descontinuado'].apply(
+            lambda x: 'background-color: red' if x == 'SI' else ''
+        )
+
+        # Aplicar el estilo de resaltar las filas con 'SI' en 'descontinuado'
+        styled_df = alternativas_disponibles_df.style.apply(
+            lambda x: [x['highlight'] for _ in x], axis=1, subset=['highlight']
+        )
+
+        # Mostrar la tabla con el estilo aplicado
         st.write("Alternativas disponibles filtradas:")
-        st.dataframe(alternativas_disponibles_df[['codart', 'cur', 'codart_alternativa', 'opcion', 'nomart', 'carta', 'descontinuado']])
+        st.dataframe(styled_df)
 
         if not alternativas_disponibles_df.empty:
             excel_file = generar_excel(alternativas_disponibles_df[['codart', 'cur', 'codart_alternativa', 'opcion', 'nomart', 'carta', 'descontinuado']])
